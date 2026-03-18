@@ -1,0 +1,32 @@
+# ============================================================
+# VoicePrint-ID Phase 1 MVP — Python Dependencies
+# ============================================================
+# Install with:
+#   pip install -r requirements.txt
+#
+# NOTE: On some Linux systems you may also need system packages:
+#   sudo apt-get install portaudio19-dev ffmpeg libsndfile1
+# ============================================================
+
+# --- Audio Processing ---
+librosa==0.10.2          # MFCC, mel-spectrogram, audio I/O utilities
+soundfile==0.12.1        # Fast audio file reading (WAV, FLAC)
+noisereduce==3.0.2       # Spectral noise gating (used in Phase 2)
+numpy==1.26.4            # Numerical arrays — core dependency
+
+# --- API Server ---
+fastapi==0.111.0         # Async REST framework with Swagger auto-docs
+uvicorn[standard]==0.29.0 # ASGI server with WebSocket support
+python-multipart==0.0.9  # Required for FastAPI file upload (Form + File)
+pydantic==2.7.1          # Data validation for API request/response models
+
+# --- Scientific Computing ---
+scipy==1.13.0            # Signal processing utilities (filters, transforms)
+scikit-learn==1.5.0      # Cosine similarity, preprocessing, metrics
+
+# --- Deep Learning (Phase 2 prep — install now to avoid re-setup) ---
+# tensorflow==2.16.1     # Uncomment when building DNN models in Phase 2
+# torch==2.3.0           # Alternative: PyTorch backend
+
+# --- Visualization (Dashboard + Analysis) ---
+matplotlib==3.9.0        # Static plotting for analysis scripts
