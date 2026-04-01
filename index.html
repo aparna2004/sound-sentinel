@@ -725,7 +725,7 @@ async function identifySpeaker() {
     document.getElementById('identifyName').textContent = 'Unknown Speaker';
     document.getElementById('identifyId').textContent   = '';
   }
-  const pct = Math.round(data.confidence * 100);
+  const pct = Math.max(0, Math.min(100, Math.round(data.confidence * 100)));
   document.getElementById('confFill').style.width  = pct + '%';
   document.getElementById('confValue').textContent = pct + '% confidence';
 
@@ -734,13 +734,17 @@ async function identifySpeaker() {
   if (data.all_scores && Object.keys(data.all_scores).length) {
     scoresEl.innerHTML = Object.entries(data.all_scores)
       .sort(([,a],[,b]) => b - a)
-      .map(([sid, score]) => `
+      .map(([sid, score]) => {
+        const barPct  = Math.max(0, Math.min(100, Math.round(score * 100)));
+        const label   = (score * 100).toFixed(1) + '%';
+        const color   = score < 0 ? 'var(--red)' : score >= 70 ? 'var(--green)' : 'var(--amber)';
+        return `
         <div class="score-row">
           <div class="score-name" title="${escHtml(sid)}">${escHtml(sid)}</div>
-          <div class="score-track"><div class="score-fill" style="width:${Math.round(score*100)}%"></div></div>
-          <div class="score-val">${(score*100).toFixed(1)}%</div>
-        </div>
-      `).join('');
+          <div class="score-track"><div class="score-fill" style="width:${barPct}%;background:${color}"></div></div>
+          <div class="score-val" style="color:${color}">${label}</div>
+        </div>`;
+      }).join('');
   } else {
     scoresEl.innerHTML = '';
   }
@@ -801,7 +805,7 @@ function renderVerifyResult(data) {
     msg.textContent = data.message || 'Speaker not verified';
     msg.style.color = 'var(--red)';
   }
-  const pct = Math.round(data.confidence * 100);
+  const pct = Math.max(0, Math.min(100, Math.round(data.confidence * 100)));
   document.getElementById('verifyFill').style.width  = pct + '%';
   document.getElementById('verifyScore').textContent  = pct + '% similarity';
 }
@@ -855,6 +859,15 @@ async function toggleRecord(mode) {
     const mimeType = getSupportedMimeType();
 
     audioChunks = [];
+
+    // Wire up Web Audio analyser for live waveform visualisation
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 1024;
+    source.connect(analyser);
+    startWaveform(mode);
+
     mediaRecorder = mimeType
       ? new MediaRecorder(stream, { mimeType })
       : new MediaRecorder(stream);
@@ -891,6 +904,10 @@ async function toggleRecord(mode) {
 
       btn.classList.remove("recording");
       btn.textContent = "⏺ Record Live (3s)";
+
+      // Stop waveform animation when recording ends
+      if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+      analyser = null;
 
       stream.getTracks().forEach(track => track.stop());
     };

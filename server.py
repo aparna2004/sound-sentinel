@@ -26,8 +26,23 @@ PHASE ROADMAP:
 ================================================================================
 """
 import os
+import getpass
 
-os.environ["PATH"] += os.pathsep + r"C:\Users\Aparna\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.0.1-full_build\bin"
+# ---------------------------------------------------------------------------
+# FFmpeg PATH setup — try current user’s WinGet install and common locations
+# ---------------------------------------------------------------------------
+_username = getpass.getuser()
+_ffmpeg_candidates = [
+    # WinGet install for current user — check common version folders
+    rf"C:\Users\{_username}\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin",
+    rf"C:\Users\{_username}\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.0.1-full_build\bin",
+    # System-wide fallbacks
+    r"C:\ProgramData\chocolatey\bin",
+    r"C:\ffmpeg\bin",
+]
+for _p in _ffmpeg_candidates:
+    if os.path.isdir(_p) and _p not in os.environ["PATH"]:
+        os.environ["PATH"] += os.pathsep + _p
 import uuid
 import shutil
 import tempfile
@@ -355,9 +370,9 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "api.server:app",
+        app,               # pass the app object directly (not a module string)
         host     = "0.0.0.0",
         port     = 8000,
-        reload   = True,
+        reload   = False,
         log_level= "info",
     )

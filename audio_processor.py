@@ -133,12 +133,27 @@ def extract_features(audio: np.ndarray, sr: int = SAMPLE_RATE) -> np.ndarray:
     """
     Extract emotion-robust speaker features.
 
-    Returns: (N_MFCC,) float32 — weighted MFCC means with CMN applied.
+    Returns: (N_MFCC,) float32 — weighted MFCC means.
+
+    IMPORTANT — WHY CMN IS NOT APPLIED HERE:
+        Classic per-utterance CMN (subtract the per-coefficient mean across
+        time and then mean-pool) produces an identically-zero output vector
+        because mean-pooling a zero-mean signal gives zero. That destroys all
+        speaker information and is the root cause of near-zero / negative
+        cosine similarities.
+
+        Instead we:
+          1. Mean-pool raw MFCCs across time  →  (N_MFCC,) vector
+          2. Apply feature weighting           →  emphasize vocal-tract dims
+          3. L2-normalize in aggregate_to_embedding()
+
+        Loudness normalization + dropping C0 already handle most channel /
+        energy variance. Further channel normalization can be done by
+        subtracting a long-term enrollment-mean at scoring time (not here).
 
     WHAT WE USE:
-        - MFCCs C1–C40 (drop C0 = energy, which is emotion-sensitive)
-        - Cepstral Mean Normalization per utterance (removes channel effects)
-        - Feature weighting (vocal-tract dims weighted up, fine-detail down)
+        - MFCCs C1–C40 (drop C0 = energy coefficient, emotion-sensitive)
+        - Feature weighting (vocal-tract dims up, fine-detail dims down)
         - Mean-only pooling (no std, no deltas — both are emotion-sensitive)
 
     WHAT WE DELIBERATELY DO NOT USE:
@@ -147,6 +162,7 @@ def extract_features(audio: np.ndarray, sr: int = SAMPLE_RATE) -> np.ndarray:
         - Energy / RMS (changes drastically with emotion)
         - Speaking rate features (emotion-dependent)
         - MFCC C0 (energy-based, emotion-sensitive)
+        - Per-utterance CMN before mean-pooling (produces zero vector)
     """
     # Extract MFCCs (C0 through C_N_MFCC)
     mfcc_full = librosa.feature.mfcc(
@@ -162,11 +178,10 @@ def extract_features(audio: np.ndarray, sr: int = SAMPLE_RATE) -> np.ndarray:
     # Drop C0 (energy coefficient — emotion-sensitive)
     mfcc = mfcc_full[1:, :]   # shape: (N_MFCC, T)
 
-    # Cepstral Mean Normalization: subtract per-coefficient mean across time
-    # Removes microphone/channel bias. Does NOT hurt cross-speaker discrimination.
-    mfcc = mfcc - mfcc.mean(axis=1, keepdims=True)
-
     # Mean-pool across time → (N_MFCC,)
+    # NOTE: Do NOT apply per-utterance CMN before this step — doing so makes
+    # mean_vec identically zero (mean of a zero-mean signal = 0) which breaks
+    # cosine similarity and causes negative scores.
     mean_vec = mfcc.mean(axis=1).astype(np.float32)
 
     # Apply vocal-tract weighting
