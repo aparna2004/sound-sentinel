@@ -1,6 +1,5 @@
 """
 ================================================================================
-VoicePrint-ID MVP | Phase 1
 speaker_recognizer.py — v5 (cosine similarity, no whitening, correct thresholds)
 ================================================================================
 
