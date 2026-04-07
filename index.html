@@ -1,996 +1,1342 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sound Sentinel</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+  <title>SoundSentinel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono&display=swap"
+    rel="stylesheet">
   <style>
-    /* ================================================================
-       DESIGN DIRECTION: Industrial / Utilitarian with Amber accents
-       Monospace grid, terminal-aesthetic, high-contrast
-       ================================================================ */
     :root {
-      --bg:        #0a0a0c;
-      --surface:   #111116;
-      --border:    #1e1e28;
-      --border2:   #2a2a38;
-      --amber:     #f5a623;
-      --amber2:    #ff7e00;
-      --green:     #39d98a;
-      --red:       #f55;
-      --text:      #e8e6e0;
-      --muted:     #888;
+      --bg-primary: #09090b;
+      --bg-surface: #18181b;
+      --bg-surface-hover: #27272a;
+      --border: #27272a;
+      --border-focus: #3f3f46;
+      --text: #fafafa;
+      --text-muted: #a1a1aa;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.1);
+      --error: #ef4444;
+      --error-bg: rgba(239, 68, 68, 0.1);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --font-ui: 'Inter', sans-serif;
       --font-mono: 'Space Mono', monospace;
-      --font-sans: 'Syne', sans-serif;
+      --sidebar-width: 260px;
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
-      background: var(--bg);
+      background: var(--bg-primary);
       color: var(--text);
-      font-family: var(--font-mono);
+      font-family: var(--font-ui);
       min-height: 100vh;
-      line-height: 1.6;
-    }
-
-    /* Header */
-    header {
-      border-bottom: 1px solid var(--border2);
-      padding: 18px 32px;
       display: flex;
-      align-items: center;
-      gap: 16px;
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(10,10,12,0.95);
-      backdrop-filter: blur(8px);
-    }
-
-    .logo {
-      font-family: var(--font-sans);
-      font-weight: 800;
-      font-size: 1.3rem;
-      letter-spacing: -0.5px;
-    }
-    .logo span { color: var(--amber); }
-
-    .phase-badge {
-      font-size: 0.65rem;
-      padding: 3px 8px;
-      border: 1px solid var(--amber);
-      color: var(--amber);
-      border-radius: 2px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-    }
-
-    .status-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      margin-left: auto;
-      box-shadow: 0 0 8px var(--green);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%,100% { opacity:1; } 50% { opacity:0.4; }
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
     }
 
     /* Layout */
-    .container {
-      max-width: 1300px;
-      margin: 0 auto;
-      padding: 32px 24px;
-      display: grid;
-      grid-template-columns: 340px 1fr;
-      gap: 24px;
-      align-items: start;
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 40;
     }
 
-    /* Panels */
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 4px;
-      overflow: hidden;
+    .main-wrapper {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      max-width: calc(100% - var(--sidebar-width));
     }
 
-    .panel-header {
-      padding: 12px 18px;
+    /* Topbar */
+    .topbar {
+      height: 64px;
       border-bottom: 1px solid var(--border);
-      font-size: 0.7rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--muted);
+      background: rgba(9, 9, 11, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 30;
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-    .panel-header .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--amber);
+      justify-content: flex-end;
+      padding: 0 32px;
     }
 
-    .panel-body { padding: 18px; }
+    /* Sidebar Branding */
+    .brand {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      border-bottom: 1px solid var(--border);
+    }
 
-    /* Form controls */
+    .brand span {
+      color: var(--accent);
+    }
+
+    /* Navigation */
+    .nav-list {
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-weight: 500;
+      transition: all 0.2s;
+      gap: 12px;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-surface-hover);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent);
+    }
+
+    .nav-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Views */
+    .view-content {
+      padding: 40px 32px;
+      max-width: 1000px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .view-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .view-header {
+      margin-bottom: 32px;
+    }
+
+    .view-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .view-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Cards & Panels */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
     label {
       display: block;
-      font-size: 0.68rem;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
-      margin-top: 14px;
-    }
-    label:first-child { margin-top: 0; }
-
-    input[type="text"], input[type="file"], select {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border2);
+      font-size: 0.85rem;
+      font-weight: 500;
       color: var(--text);
-      padding: 9px 12px;
-      font-family: var(--font-mono);
-      font-size: 0.82rem;
-      border-radius: 2px;
-      outline: none;
-      transition: border-color 0.2s;
+      margin-bottom: 8px;
     }
-    input[type="text"]:focus, select:focus {
-      border-color: var(--amber);
-    }
-    input[type="file"] { cursor: pointer; }
 
-    button {
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      padding: 10px 16px;
-      border-radius: 2px;
-      border: none;
+    input[type="text"],
+    select,
+    input[type="file"] {
+      width: 100%;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    input[type="text"]:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    input[type="file"] {
+      padding: 10px;
+      color: var(--text-muted);
       cursor: pointer;
-      transition: all 0.15s;
+    }
+
+    input[type="file"]::file-selector-button {
+      background: var(--border);
+      border: none;
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 12px;
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      transition: background 0.2s;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+      background: var(--border-focus);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: inherit;
     }
 
     .btn-primary {
-      background: var(--amber);
-      color: #000;
-      font-weight: 700;
-      width: 100%;
-      margin-top: 14px;
+      background: var(--accent);
+      color: #fff;
     }
-    .btn-primary:hover { background: var(--amber2); }
-    .btn-primary:active { transform: scale(0.98); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-outline:hover {
+      background: var(--bg-surface-hover);
+    }
 
     .btn-danger {
       background: transparent;
-      border: 1px solid var(--red);
-      color: var(--red);
-      font-size: 0.65rem;
-      padding: 4px 10px;
+      border: 1px solid var(--error);
+      color: var(--error);
+      padding: 6px 12px;
+      font-size: 0.8rem;
     }
-    .btn-danger:hover { background: rgba(255,85,85,0.1); }
+
+    .btn-danger:hover {
+      background: var(--error-bg);
+    }
 
     .btn-record {
-      background: transparent;
-      border: 1px solid var(--amber);
-      color: var(--amber);
-      padding: 9px 14px;
-      display: flex; align-items: center; gap: 8px;
       width: 100%;
-      margin-top: 8px;
-      justify-content: center;
+      background: transparent;
+      border: 1px dashed var(--accent);
+      color: var(--accent);
+      margin-bottom: 20px;
     }
+
+    .btn-record:hover {
+      background: rgba(99, 102, 241, 0.05);
+    }
+
     .btn-record.recording {
-      border-color: var(--red);
-      color: var(--red);
-      animation: blink-border 1s infinite;
-    }
-    @keyframes blink-border {
-      0%,100% { border-color: var(--red); }
-      50% { border-color: rgba(255,85,85,0.3); }
+      border-color: var(--error);
+      color: var(--error);
+      animation: pulse-record 1.5s infinite;
     }
 
-    /* Tabs */
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border2);
-      background: var(--surface);
-    }
-    .tab {
-      padding: 12px 20px;
-      font-size: 0.7rem;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-      background: none; border-radius: 0;
-      flex: 1; text-align: center;
-    }
-    .tab.active {
-      color: var(--amber);
-      border-bottom-color: var(--amber);
+    @keyframes pulse-record {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+      }
+
+      50% {
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+      }
     }
 
-    .tab-content { display: none; padding: 18px; }
-    .tab-content.active { display: block; }
-
-    /* Audio visualizer */
+    /* Waveform Canvas */
     .visualizer-wrap {
-      position: relative;
-      margin: 10px 0;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 16px;
     }
-    canvas#waveform {
-      width: 100%; height: 60px;
+
+    canvas.waveform {
+      width: 100%;
+      height: 60px;
       display: block;
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      border-radius: 2px;
     }
 
-    /* Result box */
-    .result-box {
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      border-radius: 2px;
-      padding: 16px;
-      font-size: 0.78rem;
-      min-height: 80px;
-      white-space: pre-wrap;
-      word-break: break-all;
-      color: var(--muted);
+    /* Speaker List */
+    .speaker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
     }
-    .result-box.success { border-color: var(--green); color: var(--green); }
-    .result-box.error   { border-color: var(--red);   color: var(--red);   }
-    .result-box.info    { border-color: var(--amber);  color: var(--amber);  }
 
-    /* Speaker list */
     .speaker-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
       display: flex;
-      align-items: center;
+      flex-direction: column;
       justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
+      gap: 16px;
     }
-    .speaker-card:last-child { border-bottom: none; }
 
-    .speaker-id {
-      font-size: 0.62rem;
-      color: var(--muted);
-      font-family: var(--font-mono);
-    }
-    .speaker-name {
-      font-family: var(--font-sans);
+    .speaker-info .name {
+      font-size: 1.1rem;
       font-weight: 600;
-      font-size: 0.9rem;
-    }
-    .speaker-meta {
-      font-size: 0.65rem;
-      color: var(--muted);
-    }
-
-    /* Confidence bar */
-    .conf-bar-wrap {
-      margin-top: 12px;
-    }
-    .conf-label {
-      font-size: 0.65rem;
-      color: var(--muted);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .conf-track {
-      background: var(--border2);
-      height: 6px;
-      border-radius: 3px;
-      overflow: hidden;
       margin-bottom: 4px;
     }
-    .conf-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--amber), var(--amber2));
-      border-radius: 3px;
-      transition: width 0.6s cubic-bezier(0.16,1,0.3,1);
+
+    .speaker-info .id {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
 
-    /* Score table */
-    .score-row {
+    .speaker-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      display: inline-flex;
+      background: var(--border);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    /* Result Boxes */
+    .result-box {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .result-box.success {
+      border-color: var(--success);
+      color: var(--success);
+      background: var(--success-bg);
+    }
+
+    .result-box.error {
+      border-color: var(--error);
+      color: var(--error);
+      background: var(--error-bg);
+    }
+
+    .result-box.info {
+      border-color: var(--warning);
+      color: var(--warning);
+      background: var(--warning-bg);
+    }
+
+    /* API Status & Logs */
+    .status-indicator {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 8px;
-      font-size: 0.72rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
     }
-    .score-name { width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .score-track {
-      flex: 1;
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .api-log-container {
+      position: fixed;
+      bottom: 24px;
+      right: 32px;
+      width: 400px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(120%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .api-log-container.open {
+      transform: translateY(0);
+    }
+
+    .api-log-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .api-log-body {
+      padding: 16px;
+      height: 250px;
+      overflow-y: auto;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .api-log-toggle {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .api-log-toggle:hover {
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-success {
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-error {
+      background: var(--error-bg);
+      color: var(--error);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-warning {
+      background: var(--warning-bg);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    /* Progress Bars */
+    .progress-bar-wrap {
+      margin-top: 16px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-muted);
+    }
+
+    .progress-track {
       background: var(--border);
-      height: 4px;
-      border-radius: 2px;
+      height: 6px;
+      border-radius: 3px;
       overflow: hidden;
     }
-    .score-fill {
-      height: 100%;
-      background: var(--amber);
-      border-radius: 2px;
-      transition: width 0.5s ease;
-    }
-    .score-val { width: 42px; text-align: right; color: var(--muted); }
 
-    /* Divider */
-    .divider {
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Score Rows */
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+    }
+
+    .score-name {
+      width: 100px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .score-val {
+      width: 50px;
+      text-align: right;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    hr {
       border: none;
       border-top: 1px solid var(--border);
-      margin: 16px 0;
-    }
-
-    /* Spinner */
-    .spinner {
-      display: inline-block;
-      width: 14px; height: 14px;
-      border: 2px solid var(--amber);
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      vertical-align: middle;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Right column sticky header */
-    .right-col { display: flex; flex-direction: column; gap: 24px; }
-
-    /* Responsive */
-    @media (max-width: 880px) {
-      .container { grid-template-columns: 1fr; }
-    }
-
-    /* Info chip */
-    .chip {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 2px;
-      font-size: 0.6rem;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-    .chip-green { background: rgba(57,217,138,0.12); color: var(--green); border: 1px solid rgba(57,217,138,0.3); }
-    .chip-red   { background: rgba(255,85,85,0.12);  color: var(--red);   border: 1px solid rgba(255,85,85,0.3); }
-    .chip-amber { background: rgba(245,166,35,0.12); color: var(--amber); border: 1px solid rgba(245,166,35,0.3); }
-
-    footer {
-      text-align: center;
-      color: var(--border2);
-      font-size: 0.65rem;
-      padding: 28px;
-      letter-spacing: 1.5px;
+      margin: 24px 0;
     }
   </style>
 </head>
+
 <body>
 
-<header>
-  <div class="logo">Sound<span>Sentinel</span></div>
-  <div class="phase-badge"></div>
-  <div class="status-dot" id="apiStatus" title="API Status"></div>
-</header>
-
-<div class="container">
-  <!-- ===================== LEFT COLUMN ===================== -->
-  <aside>
-
-    <!-- ENROLL PANEL -->
-    <div class="panel" style="margin-bottom:24px">
-      <div class="panel-header"><span class="dot"></span> Enroll Speaker</div>
-      <div class="panel-body">
-
-        <label>Speaker ID</label>
-        <input type="text" id="enrollId" placeholder="user_001" />
-
-        <label>Display Name</label>
-        <input type="text" id="enrollName" placeholder="Alice" />
-
-        <label>Audio Samples</label>
-        <input type="file" id="enrollFiles" accept="audio/*" multiple />
-        <div style="font-size:0.62rem;color:var(--muted);margin-top:6px">
-          Upload 3–5 WAV/MP3 samples (5–10 sec each) for best results.
-        </div>
-
-        <div class="visualizer-wrap">
-          <canvas id="waveformEnroll"></canvas>
-        </div>
-        <button class="btn-record" id="btnRecordEnroll" onclick="toggleRecord('enroll')">
-          ⏺ Record Live (3s)
-        </button>
-
-        <button class="btn-primary" id="btnEnroll" onclick="enrollSpeaker()">
-          Enroll Speaker
-        </button>
-
-        <div id="enrollResult" class="result-box" style="margin-top:14px">
-          Awaiting enrollment…
-        </div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      Sound<span>Sentinel</span>
+    </div>
+    <div class="nav-list">
+      <div class="nav-item active" onclick="switchView('dashboard')" id="nav-dashboard">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+          </path>
+        </svg>
+        Dashboard
+      </div>
+      <div class="nav-item" onclick="switchView('enroll')" id="nav-enroll">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+        </svg>
+        Enroll Speaker
+      </div>
+      <div class="nav-item" onclick="switchView('identify')" id="nav-identify">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        Identify Target
+      </div>
+      <div class="nav-item" onclick="switchView('verify')" id="nav-verify">
+        <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+          </path>
+        </svg>
+        Verify Claim
       </div>
     </div>
-
-    <!-- SPEAKERS LIST PANEL -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="dot"></span> Enrolled Speakers
-        <button onclick="loadSpeakers()" style="margin-left:auto;background:none;border:none;color:var(--amber);cursor:pointer;font-size:0.7rem;padding:0;text-transform:uppercase;letter-spacing:1px">↻ Refresh</button>
-      </div>
-      <div class="panel-body">
-        <div id="speakerList">
-          <div style="color:var(--muted);font-size:0.75rem;">Loading speakers…</div>
-        </div>
-      </div>
-    </div>
-
   </aside>
 
-  <!-- ===================== RIGHT COLUMN ===================== -->
-  <div class="right-col">
+  <!-- Main Area -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div style="flex:1"></div>
+      <button class="api-log-toggle" onclick="toggleApiLog()">View API Logs</button>
+      <div class="status-indicator" style="margin-left: 24px;">
+        <div class="status-dot" id="apiStatus" title="API Status"></div>
+        <span id="apiStatusText">System Online</span>
+      </div>
+    </header>
 
-    <!-- IDENTIFY / VERIFY TABS -->
-    <div class="panel">
-      <div class="tabs">
-        <button class="tab active" onclick="switchTab('identify',this)">Identify</button>
-        <button class="tab" onclick="switchTab('verify',this)">Verify</button>
+    <!-- VIEWS -->
+    <!-- Dashboard -->
+    <main class="view-content active" id="view-dashboard">
+      <div class="view-header">
+        <h1 class="view-title">Dashboard</h1>
+        <p class="view-desc">Overview of enrolled voice profiles.</p>
       </div>
 
-      <!-- IDENTIFY TAB -->
-      <div id="tab-identify" class="tab-content active">
-        <label>Upload Audio to Identify</label>
-        <input type="file" id="identifyFile" accept="audio/*" />
+      <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+        <button class="btn btn-outline" onclick="loadSpeakers()">Refresh Profiles</button>
+      </div>
 
-        <div class="visualizer-wrap">
-          <canvas id="waveformIdentify"></canvas>
+      <div id="speakerList" class="speaker-grid">
+        <div style="color:var(--text-muted); grid-column: 1/-1;">Loading profiles...</div>
+      </div>
+    </main>
+
+    <!-- Enroll View -->
+    <main class="view-content" id="view-enroll">
+      <div class="view-header">
+        <h1 class="view-title">Enroll Speaker</h1>
+        <p class="view-desc">Register a new voice profile into the system database.</p>
+      </div>
+
+      <div class="card" style="max-width: 600px;">
+        <div class="form-group">
+          <label>Speaker ID (Unique)</label>
+          <input type="text" id="enrollId" placeholder="e.g., user_001" />
         </div>
-        <button class="btn-record" id="btnRecordIdentify" onclick="toggleRecord('identify')">
-          ⏺ Record Live (3s)
+        <div class="form-group">
+          <label>Display Name</label>
+          <input type="text" id="enrollName" placeholder="e.g., Alice" />
+        </div>
+
+        <div class="form-group">
+          <label>Audio Samples</label>
+          <input type="file" id="enrollFiles" accept="audio/*" multiple />
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:8px;">Upload 3–5 WAV/MP3 samples (5–10 sec
+            each) for optimal accuracy.</p>
+        </div>
+
+        <div class="form-group">
+          <label>Or Record Live Audio</label>
+          <div class="visualizer-wrap">
+            <canvas id="waveformEnroll" class="waveform"></canvas>
+          </div>
+          <button class="btn btn-record" id="btnRecordEnroll" onclick="toggleRecord('enroll')">
+            ⏺ Record Sample (3s)
+          </button>
+          <audio id="audioPlaybackEnroll" controls style="display:none; width: 100%; margin-bottom: 20px;"></audio>
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%; padding: 14px;" id="btnEnroll" onclick="enrollSpeaker()">
+          Register Profile
         </button>
 
-        <button class="btn-primary" onclick="identifySpeaker()">Run Identification</button>
+        <div id="enrollResult" class="result-box" style="display:none;"></div>
+      </div>
+    </main>
 
-        <!-- Result -->
-        <div id="identifyResult" style="margin-top:18px;display:none">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-            <div id="identifyBadge" class="chip chip-amber">UNKNOWN</div>
-            <div style="font-family:var(--font-sans);font-size:1.1rem;font-weight:700" id="identifyName">—</div>
-            <div style="color:var(--muted);font-size:0.75rem" id="identifyId">—</div>
-          </div>
-          <div class="conf-bar-wrap">
-            <div class="conf-label">Confidence</div>
-            <div class="conf-track"><div class="conf-fill" id="confFill" style="width:0%"></div></div>
-            <div id="confValue" style="font-size:0.72rem;color:var(--muted)">0%</div>
-          </div>
-          <hr class="divider"/>
-          <div class="conf-label" style="margin-bottom:10px">All Speaker Scores</div>
-          <div id="allScores"></div>
-        </div>
+    <!-- Identify View -->
+    <main class="view-content" id="view-identify">
+      <div class="view-header">
+        <h1 class="view-title">Identify Target</h1>
+        <p class="view-desc">Determine who is speaking in an unknown audio clip.</p>
       </div>
 
-      <!-- VERIFY TAB -->
-      <div id="tab-verify" class="tab-content">
-        <label>Claimed Speaker ID</label>
-        <select id="verifyId">
-          <option value="">— Select enrolled speaker —</option>
-        </select>
-
-        <label>Upload Audio to Verify</label>
-        <input type="file" id="verifyFile" accept="audio/*" />
-
-        <div class="visualizer-wrap">
-          <canvas id="waveformVerify"></canvas>
-        </div>
-        <button class="btn-record" id="btnRecordVerify" onclick="toggleRecord('verify')">
-          ⏺ Record Live (3s)
-        </button>
-
-        <button class="btn-primary" onclick="verifySpeaker()">Run Verification</button>
-
-        <div id="verifyResult" style="margin-top:18px;display:none">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-            <div id="verifyBadge" class="chip chip-amber">PENDING</div>
-            <div style="font-family:var(--font-sans);font-size:1rem;" id="verifyMsg">—</div>
+      <div style="display:flex; gap: 32px; flex-wrap: wrap;">
+        <div class="card" style="flex:1; min-width: 320px;">
+          <div class="form-group">
+            <label>Upload Audio</label>
+            <input type="file" id="identifyFile" accept="audio/*" />
           </div>
-          <div class="conf-bar-wrap">
-            <div class="conf-label">Similarity Score</div>
-            <div class="conf-track"><div class="conf-fill" id="verifyFill" style="width:0%"></div></div>
-            <div id="verifyScore" style="font-size:0.72rem;color:var(--muted)">0%</div>
+
+          <div class="form-group">
+            <label>Or Record Target Voice</label>
+            <div class="visualizer-wrap">
+              <canvas id="waveformIdentify" class="waveform"></canvas>
+            </div>
+            <button class="btn btn-record" id="btnRecordIdentify" onclick="toggleRecord('identify')">
+              ⏺ Record Live (3s)
+            </button>
+            <audio id="audioPlaybackIdentify" controls style="display:none; width: 100%; margin-bottom: 20px;"></audio>
+          </div>
+
+          <button class="btn btn-primary" style="width: 100%; padding: 14px;" onclick="identifySpeaker()">
+            Run Identification Analysis
+          </button>
+        </div>
+
+        <!-- Identify Results Panel -->
+        <div class="card" style="flex:1; min-width: 320px; display:none;" id="identifyResultPanel">
+          <label>Analysis Result</label>
+          <div style="display:flex; align-items:center; gap:16px; margin: 16px 0;">
+            <div id="identifyBadge" class="badge">UNKNOWN</div>
+            <div>
+              <div style="font-weight:600; font-size:1.2rem;" id="identifyName">—</div>
+              <div style="color:var(--text-muted); font-size:0.85rem; font-family:var(--font-mono);" id="identifyId">—
+              </div>
+            </div>
+          </div>
+
+          <div class="progress-bar-wrap">
+            <div class="progress-label">
+              <span>Primary Match Confidence</span>
+              <span id="confValue">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="confFill" style="width:0%"></div>
+            </div>
+          </div>
+
+          <hr />
+          <label>All Candidate Scores</label>
+          <div id="allScores" style="margin-top: 12px;"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Verify View -->
+    <main class="view-content" id="view-verify">
+      <div class="view-header">
+        <h1 class="view-title">Verify Claim</h1>
+        <p class="view-desc">Validate if an audio sample matches a specific enrolled profile.</p>
+      </div>
+
+      <div style="display:flex; gap: 32px; flex-wrap: wrap;">
+        <div class="card" style="flex:1; min-width: 320px;">
+          <div class="form-group">
+            <label>Claimed Profile</label>
+            <select id="verifyId">
+              <option value="">— Select enrolled profile —</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Upload Audio</label>
+            <input type="file" id="verifyFile" accept="audio/*" />
+          </div>
+
+          <div class="form-group">
+            <label>Or Record Verification Sample</label>
+            <div class="visualizer-wrap">
+              <canvas id="waveformVerify" class="waveform"></canvas>
+            </div>
+            <button class="btn btn-record" id="btnRecordVerify" onclick="toggleRecord('verify')">
+              ⏺ Record Live (3s)
+            </button>
+            <audio id="audioPlaybackVerify" controls style="display:none; width: 100%; margin-bottom: 20px;"></audio>
+          </div>
+
+          <button class="btn btn-primary" style="width: 100%; padding: 14px;" onclick="verifySpeaker()">
+            Run Verification Protocol
+          </button>
+        </div>
+
+        <!-- Verify Results Panel -->
+        <div class="card" style="flex:1; min-width: 320px; display:none;" id="verifyResultPanel">
+          <label>Verification Result</label>
+          <div style="display:flex; align-items:center; gap:16px; margin: 16px 0;">
+            <div id="verifyBadge" class="badge">PENDING</div>
+            <div style="font-weight:600; font-size:1.1rem;" id="verifyMsg">—</div>
+          </div>
+
+          <div class="progress-bar-wrap">
+            <div class="progress-label">
+              <span>Similarity Score</span>
+              <span id="verifyScore">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="verifyFill" style="background:var(--success); width:0%"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- API LOG PANEL -->
-    <div class="panel">
-      <div class="panel-header">
-        <span class="dot"></span> API Response Log
-        <button onclick="clearLog()" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.7rem;padding:0;text-transform:uppercase;letter-spacing:1px">Clear</button>
-      </div>
-      <div class="panel-body" style="padding:0">
-        <div id="apiLog" style="font-size:0.7rem;max-height:260px;overflow-y:auto;padding:14px;font-family:var(--font-mono);color:var(--muted);white-space:pre-wrap;word-break:break-all">
-API log will appear here…
-        </div>
-      </div>
-    </div>
-
+    </main>
   </div>
-</div>
 
-<footer>Sound Sentinel · PHASE 1 · MFCC + COSINE SIMILARITY ENGINE</footer>
+  <!-- API Log Drawer -->
+  <div class="api-log-container" id="apiLogDrawer">
+    <div class="api-log-header">
+      <span>System Event Log</span>
+      <button style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem;"
+        onclick="toggleApiLog()">×</button>
+    </div>
+    <div class="api-log-body" id="apiLog">System initialized...</div>
+    <div style="padding: 12px 16px; border-top: 1px solid var(--border);">
+      <button class="btn btn-outline" style="font-size: 0.75rem; padding: 6px 12px;" onclick="clearLog()">Clear
+        Logs</button>
+    </div>
+  </div>
 
-<script>
-/* ================================================================
-   ================================================================ */
+  <script>
+    /* ================================================================
+       Application Logic (Preserved from original implementation)
+       ================================================================ */
 
-const API = window.location.origin + '/api/v1';
+    const API = window.location.origin + '/api/v1';
 
-// ---------------------------------------------------------------
-// Utility: log API responses in the log panel
-// ---------------------------------------------------------------
-function log(label, data, isError = false) {
-  const box = document.getElementById('apiLog');
-  const ts  = new Date().toLocaleTimeString();
-  const color = isError ? '#f55' : '#f5a623';
-  box.innerHTML += `\n<span style="color:${color}">[${ts}] ${label}</span>\n` +
-                   JSON.stringify(data, null, 2) + '\n';
-  box.scrollTop = box.scrollHeight;
-}
+    // ---------------------------------------------------------------
+    // View Management
+    // ---------------------------------------------------------------
+    function switchView(viewName) {
+      // Update sidebar active states
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      document.getElementById('nav-' + viewName).classList.add('active');
 
-function clearLog() {
-  document.getElementById('apiLog').innerHTML = 'API log cleared.\n';
-}
+      // Update visible main container
+      document.querySelectorAll('.view-content').forEach(el => el.classList.remove('active'));
+      document.getElementById('view-' + viewName).classList.add('active');
 
-// ---------------------------------------------------------------
-// API health check on load
-// ---------------------------------------------------------------
-async function checkHealth() {
-  try {
-    const res = await fetch(`${API}/health`);
-    const dot = document.getElementById('apiStatus');
-    if (res.ok) {
-      const data = await res.json();
-      dot.style.background = '#39d98a';
-      dot.style.boxShadow  = '0 0 8px #39d98a';
-      dot.title = `API OK · ${data.speakers_enrolled} speaker(s) enrolled`;
-      log('health', data);
-    } else {
-      dot.style.background = '#f55';
-      dot.title = 'API unreachable';
+      // Specific view init logic
+      if (viewName === 'dashboard') loadSpeakers();
+      else if (viewName === 'verify') loadSpeakersForVerifyDropdown();
     }
-  } catch (e) {
-    document.getElementById('apiStatus').style.background = '#f55';
-    log('health error', { error: e.message }, true);
-  }
-}
 
-// ---------------------------------------------------------------
-// Load and render enrolled speakers
-// ---------------------------------------------------------------
-async function loadSpeakers() {
-  try {
-    const res  = await fetch(`${API}/speakers`);
-    const data = await res.json();
-    renderSpeakers(data);
-    populateVerifyDropdown(data);
-  } catch (e) {
-    document.getElementById('speakerList').innerHTML =
-      `<div style="color:var(--red);font-size:0.75rem">Could not load speakers: ${e.message}</div>`;
-  }
-}
+    function toggleApiLog() {
+      document.getElementById('apiLogDrawer').classList.toggle('open');
+    }
 
-function renderSpeakers(speakers) {
-  const box = document.getElementById('speakerList');
-  if (!speakers.length) {
-    box.innerHTML = '<div style="color:var(--muted);font-size:0.75rem">No speakers enrolled yet.</div>';
-    return;
-  }
-  box.innerHTML = speakers.map(s => `
+    // ---------------------------------------------------------------
+    // Utility: log API responses
+    // ---------------------------------------------------------------
+    function log(label, data, isError = false) {
+      const box = document.getElementById('apiLog');
+      const ts = new Date().toLocaleTimeString();
+      const color = isError ? 'var(--error)' : 'var(--accent)';
+      box.innerHTML += `<span style="color:${color}">[${ts}] ${label}</span>\n` + JSON.stringify(data, null, 2) + '\n\n';
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('apiLog').innerHTML = 'API log cleared.\n';
+    }
+
+    // ---------------------------------------------------------------
+    // API health check
+    // ---------------------------------------------------------------
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API}/health`);
+        const dot = document.getElementById('apiStatus');
+        const txt = document.getElementById('apiStatusText');
+        if (res.ok) {
+          const data = await res.json();
+          dot.style.background = 'var(--success)';
+          dot.style.boxShadow = '0 0 8px var(--success)';
+          txt.textContent = 'System Online';
+          log('health', data);
+        } else {
+          dot.style.background = 'var(--error)';
+          dot.style.boxShadow = 'none';
+          txt.textContent = 'API Error';
+        }
+      } catch (e) {
+        document.getElementById('apiStatus').style.background = 'var(--error)';
+        document.getElementById('apiStatus').style.boxShadow = 'none';
+        document.getElementById('apiStatusText').textContent = 'Offline';
+        log('health error', { error: e.message }, true);
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // Speakers List
+    // ---------------------------------------------------------------
+    async function loadSpeakers() {
+      try {
+        const res = await fetch(`${API}/speakers`);
+        const data = await res.json();
+        renderSpeakers(data);
+        populateVerifyDropdown(data);
+      } catch (e) {
+        document.getElementById('speakerList').innerHTML =
+          `<div style="color:var(--error); grid-column:1/-1;">Could not load profiles: ${e.message}</div>`;
+      }
+    }
+
+    async function loadSpeakersForVerifyDropdown() {
+      try {
+        const res = await fetch(`${API}/speakers`);
+        const data = await res.json();
+        populateVerifyDropdown(data);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderSpeakers(speakers) {
+      const box = document.getElementById('speakerList');
+      if (!speakers.length) {
+        box.innerHTML = '<div style="color:var(--text-muted); grid-column:1/-1;">No profiles registered yet.</div>';
+        return;
+      }
+      box.innerHTML = speakers.map(s => `
     <div class="speaker-card">
-      <div>
-        <div class="speaker-name">${escHtml(s.name)}</div>
-        <div class="speaker-id">${escHtml(s.speaker_id)}</div>
-        <div class="speaker-meta">${s.n_samples} sample(s)</div>
+      <div class="speaker-info">
+        <div class="name">${escHtml(s.name)}</div>
+        <div class="id">${escHtml(s.speaker_id)}</div>
       </div>
-      <button class="btn-danger" onclick="deleteSpeaker('${escHtml(s.speaker_id)}')">Delete</button>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span class="speaker-meta">${s.n_samples} sample(s)</span>
+        <button class="btn btn-danger" onclick="deleteSpeaker('${escHtml(s.speaker_id)}')">Revoke</button>
+      </div>
     </div>
   `).join('');
-}
-
-function populateVerifyDropdown(speakers) {
-  const sel = document.getElementById('verifyId');
-  sel.innerHTML = '<option value="">— Select enrolled speaker —</option>' +
-    speakers.map(s => `<option value="${escHtml(s.speaker_id)}">${escHtml(s.name)} (${escHtml(s.speaker_id)})</option>`).join('');
-}
-
-// ---------------------------------------------------------------
-// Tab switching
-// ---------------------------------------------------------------
-function switchTab(name, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
-}
-
-// ---------------------------------------------------------------
-// Enroll
-// ---------------------------------------------------------------
-async function enrollSpeaker() {
-  const speakerId = document.getElementById("enrollId").value.trim();
-  const speakerName = document.getElementById("enrollName").value.trim();
-  const fileInput = document.getElementById("enrollFiles");
-  const resultBox = document.getElementById("enrollResult");
-
-  if (!speakerId || !speakerName) {
-    resultBox.className = "result-box error";
-    resultBox.textContent = "Speaker ID and name are required.";
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("speaker_id", speakerId);
-  formData.append("speaker_name", speakerName);
-
-  const uploadedFiles = Array.from(fileInput.files || []);
-  const allFiles = [...uploadedFiles, ...recordedFiles.enroll];
-
-  if (allFiles.length === 0) {
-    resultBox.className = "result-box error";
-    resultBox.textContent = "Please upload or record at least one audio sample.";
-    return;
-  }
-
-  allFiles.forEach(file => formData.append("files", file));
-
-  resultBox.className = "result-box info";
-  resultBox.textContent = "Enrolling speaker...";
-
-  try {
-    const response = await fetch("/api/v1/speakers/enroll", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.detail || "Enrollment failed");
     }
 
-    resultBox.className = "result-box success";
-    resultBox.textContent = data.message || "Enrollment successful.";
+    function populateVerifyDropdown(speakers) {
+      const sel = document.getElementById('verifyId');
+      if (!sel) return;
+      const currentVal = sel.value;
+      sel.innerHTML = '<option value="">— Select enrolled profile —</option>' +
+        speakers.map(s => `<option value="${escHtml(s.speaker_id)}">${escHtml(s.name)} (${escHtml(s.speaker_id)})</option>`).join('');
 
-    recordedFiles.enroll = [];
-    fileInput.value = "";
-    loadSpeakers();
-
-  } catch (err) {
-    resultBox.className = "result-box error";
-    resultBox.textContent = err.message;
-  }
-}
-// ---------------------------------------------------------------
-// Identify
-// ---------------------------------------------------------------
-async function identifySpeaker() {
-  const fileInput = document.getElementById("identifyFile");
-  const pickedFile = fileInput.files[0] || recordedFiles.identify;
-
-  if (!pickedFile) {
-    alert("Please upload or record audio first.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("file", pickedFile);
-
-  try {
-    const response = await fetch("/api/v1/speakers/identify", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.detail || "Identification failed");
+      if (Array.from(sel.options).some(o => o.value === currentVal)) {
+        sel.value = currentVal;
+      }
     }
 
-    renderIdentifyResult(data);
+    // ---------------------------------------------------------------
+    // Delete speaker
+    // ---------------------------------------------------------------
+    async function deleteSpeaker(sid) {
+      if (!confirm(`Permanently revoke profile "${sid}"?`)) return;
+      try {
+        const res = await fetch(`${API}/speakers/${sid}`, { method: 'DELETE' });
+        const data = await res.json();
+        log('delete', data, !data.success);
+        loadSpeakers();
+      } catch (e) {
+        log('delete error', { error: e.message }, true);
+      }
+    }
 
-  } catch (err) {
-    alert(err.message);
-  }
-}function renderIdentifyResult(data) {
-  document.getElementById('identifyResult').style.display = 'block';
-  const badge = document.getElementById('identifyBadge');
-  if (data.identified) {
-    badge.className = 'chip chip-green';
-    badge.textContent = 'IDENTIFIED';
-    document.getElementById('identifyName').textContent = data.speaker_name;
-    document.getElementById('identifyId').textContent   = data.speaker_id;
-  } else {
-    badge.className = 'chip chip-red';
-    badge.textContent = 'UNKNOWN';
-    document.getElementById('identifyName').textContent = 'Unknown Speaker';
-    document.getElementById('identifyId').textContent   = '';
-  }
-  const pct = Math.max(0, Math.min(100, Math.round(data.confidence * 100)));
-  document.getElementById('confFill').style.width  = pct + '%';
-  document.getElementById('confValue').textContent = pct + '% confidence';
+    // ---------------------------------------------------------------
+    // Enroll
+    // ---------------------------------------------------------------
+    async function enrollSpeaker() {
+      const speakerId = document.getElementById("enrollId").value.trim();
+      const speakerName = document.getElementById("enrollName").value.trim();
+      const fileInput = document.getElementById("enrollFiles");
+      const resultBox = document.getElementById("enrollResult");
 
-  // All scores bars
-  const scoresEl = document.getElementById('allScores');
-  if (data.all_scores && Object.keys(data.all_scores).length) {
-    scoresEl.innerHTML = Object.entries(data.all_scores)
-      .sort(([,a],[,b]) => b - a)
-      .map(([sid, score]) => {
-        const barPct  = Math.max(0, Math.min(100, Math.round(score * 100)));
-        const label   = (score * 100).toFixed(1) + '%';
-        const color   = score < 0 ? 'var(--red)' : score >= 70 ? 'var(--green)' : 'var(--amber)';
-        return `
+      if (!speakerId || !speakerName) {
+        resultBox.style.display = "block";
+        resultBox.className = "result-box error";
+        resultBox.textContent = "Speaker ID and name are required.";
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("speaker_id", speakerId);
+      formData.append("speaker_name", speakerName);
+
+      const uploadedFiles = Array.from(fileInput.files || []);
+      const allFiles = [...uploadedFiles, ...recordedFiles.enroll];
+
+      if (allFiles.length === 0) {
+        resultBox.style.display = "block";
+        resultBox.className = "result-box error";
+        resultBox.textContent = "Please upload or record at least one audio sample.";
+        return;
+      }
+
+      allFiles.forEach(file => formData.append("files", file));
+
+      resultBox.style.display = "block";
+      resultBox.className = "result-box info";
+      resultBox.textContent = "Processing and enrolling via system...";
+
+      try {
+        const response = await fetch("/api/v1/speakers/enroll", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Enrollment failed");
+        }
+
+        resultBox.className = "result-box success";
+        resultBox.textContent = data.message || "Enrollment completed successfully.";
+
+        recordedFiles.enroll = [];
+        fileInput.value = "";
+        document.getElementById("audioPlaybackEnroll").style.display = "none";
+        document.getElementById("btnRecordEnroll").textContent = "⏺ Record Sample (3s)";
+
+        // Switch to dashboard to show it? Or just leave it
+        setTimeout(() => {
+          loadSpeakers();
+          switchView('dashboard');
+          resultBox.style.display = 'none';
+          document.getElementById("enrollId").value = '';
+          document.getElementById("enrollName").value = '';
+        }, 2000);
+
+      } catch (err) {
+        resultBox.className = "result-box error";
+        resultBox.textContent = err.message;
+      }
+    }
+
+    // ---------------------------------------------------------------
+    // Identify
+    // ---------------------------------------------------------------
+    async function identifySpeaker() {
+      const fileInput = document.getElementById("identifyFile");
+      const pickedFile = fileInput.files[0] || recordedFiles.identify;
+      const panel = document.getElementById("identifyResultPanel");
+
+      if (!pickedFile) {
+        alert("Please upload or record target audio first.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", pickedFile);
+
+      try {
+        const response = await fetch("/api/v1/speakers/identify", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Identification protocol failed");
+        }
+
+        renderIdentifyResult(data);
+        fileInput.value = "";
+        recordedFiles.identify = null;
+        document.getElementById("audioPlaybackIdentify").style.display = "none";
+        document.getElementById("btnRecordIdentify").textContent = "⏺ Record Live (3s)";
+
+      } catch (err) {
+        panel.style.display = 'block';
+        panel.innerHTML = `<div class="result-box error">${err.message}</div>`;
+      }
+    }
+
+    function renderIdentifyResult(data) {
+      document.getElementById('identifyResultPanel').style.display = 'block';
+      const badge = document.getElementById('identifyBadge');
+
+      if (data.identified) {
+        badge.className = 'badge badge-success';
+        badge.textContent = 'MATCH FOUND';
+        document.getElementById('identifyName').textContent = data.speaker_name;
+        document.getElementById('identifyId').textContent = data.speaker_id;
+      } else {
+        badge.className = 'badge badge-error';
+        badge.textContent = 'NO MATCH';
+        document.getElementById('identifyName').textContent = 'Unknown Entity';
+        document.getElementById('identifyId').textContent = '';
+      }
+
+      const pct = Math.max(0, Math.min(100, Math.round(data.confidence * 100)));
+      document.getElementById('confFill').style.width = pct + '%';
+      document.getElementById('confValue').textContent = pct + '%';
+
+      const fillCol = data.identified ? 'var(--accent)' : 'var(--warning)';
+      document.getElementById('confFill').style.background = fillCol;
+
+      // All scores bars
+      const scoresEl = document.getElementById('allScores');
+      if (data.all_scores && Object.keys(data.all_scores).length) {
+        scoresEl.innerHTML = Object.entries(data.all_scores)
+          .sort(([, a], [, b]) => b - a)
+          .map(([sid, score]) => {
+            const barPct = Math.max(0, Math.min(100, Math.round(score * 100)));
+            const label = (score * 100).toFixed(1) + '%';
+            const color = score < 0 ? 'var(--error)' : score >= 70 ? 'var(--success)' : 'var(--warning)';
+            return `
         <div class="score-row">
           <div class="score-name" title="${escHtml(sid)}">${escHtml(sid)}</div>
-          <div class="score-track"><div class="score-fill" style="width:${barPct}%;background:${color}"></div></div>
+          <div class="progress-track" style="flex:1"><div class="progress-fill" style="width:${barPct}%;background:${color}"></div></div>
           <div class="score-val" style="color:${color}">${label}</div>
         </div>`;
-      }).join('');
-  } else {
-    scoresEl.innerHTML = '';
-  }
-}
-
-// ---------------------------------------------------------------
-// Verify
-// ---------------------------------------------------------------
-async function verifySpeaker() {
-  const speakerId = document.getElementById("verifyId").value;
-  const fileInput = document.getElementById("verifyFile");
-  const pickedFile = fileInput.files[0] || recordedFiles.verify;
-
-  if (!speakerId) {
-    alert("Please select a speaker.");
-    return;
-  }
-
-  if (!pickedFile) {
-    alert("Please upload or record audio first.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("speaker_id", speakerId);
-  formData.append("file", pickedFile);
-
-  try {
-    const response = await fetch("/api/v1/speakers/verify", {
-      method: "POST",
-      body: formData
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.detail || "Verification failed");
+          }).join('');
+      } else {
+        scoresEl.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;">No candidates scored.</div>';
+      }
     }
 
-    renderVerifyResult(data);
+    // ---------------------------------------------------------------
+    // Verify
+    // ---------------------------------------------------------------
+    async function verifySpeaker() {
+      const speakerId = document.getElementById("verifyId").value;
+      const fileInput = document.getElementById("verifyFile");
+      const pickedFile = fileInput.files[0] || recordedFiles.verify;
+      const panel = document.getElementById("verifyResultPanel");
 
-  } catch (err) {
-    alert(err.message);
-  }
-}
-function renderVerifyResult(data) {
-  document.getElementById('verifyResult').style.display = 'block';
-  const badge = document.getElementById('verifyBadge');
-  const msg   = document.getElementById('verifyMsg');
-  if (data.verified) {
-    badge.className = 'chip chip-green';
-    badge.textContent = 'VERIFIED ✓';
-    msg.textContent = `${data.speaker_name} confirmed`;
-    msg.style.color = 'var(--green)';
-  } else {
-    badge.className = 'chip chip-red';
-    badge.textContent = 'REJECTED ✗';
-    msg.textContent = data.message || 'Speaker not verified';
-    msg.style.color = 'var(--red)';
-  }
-  const pct = Math.max(0, Math.min(100, Math.round(data.confidence * 100)));
-  document.getElementById('verifyFill').style.width  = pct + '%';
-  document.getElementById('verifyScore').textContent  = pct + '% similarity';
-}
-
-// ---------------------------------------------------------------
-// Delete speaker
-// ---------------------------------------------------------------
-async function deleteSpeaker(sid) {
-  if (!confirm(`Delete speaker "${sid}"?`)) return;
-  try {
-    const res  = await fetch(`${API}/speakers/${sid}`, { method: 'DELETE' });
-    const data = await res.json();
-    log('delete', data, !data.success);
-    loadSpeakers();
-  } catch (e) {
-    log('delete error', { error: e.message }, true);
-  }
-}
-
-// ---------------------------------------------------------------
-// Live recording (Web Audio API + MediaRecorder)
-// ---------------------------------------------------------------
-let mediaRecorder   = null;
-let recordingChunks = [];
-let enrollRecorded  = [];
-let identifyRecorded = [];
-let verifyRecorded  = [];
-let analyser        = null;
-let animFrame       = null;
-let audioChunks = [];
-let recordedFiles = {
-  enroll: [],
-  identify: null,
-  verify: null
-};
-
-async function toggleRecord(mode) {
-  const btn = document.getElementById(
-    mode === "enroll" ? "btnRecordEnroll" :
-    mode === "identify" ? "btnRecordIdentify" :
-    "btnRecordVerify"
-  );
-
-  if (mediaRecorder && mediaRecorder.state === "recording") {
-    mediaRecorder.stop();
-    return;
-  }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mimeType = getSupportedMimeType();
-
-    audioChunks = [];
-
-    // Wire up Web Audio analyser for live waveform visualisation
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioCtx.createMediaStreamSource(stream);
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 1024;
-    source.connect(analyser);
-    startWaveform(mode);
-
-    mediaRecorder = mimeType
-      ? new MediaRecorder(stream, { mimeType })
-      : new MediaRecorder(stream);
-
-    btn.classList.add("recording");
-    btn.textContent = "⏹ Stop Recording";
-
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data && event.data.size > 0) {
-        audioChunks.push(event.data);
-      }
-    };
-
-    mediaRecorder.onstop = () => {
-      const finalMimeType = mediaRecorder.mimeType || mimeType || "audio/webm";
-      const blob = new Blob(audioChunks, { type: finalMimeType });
-
-      let ext = "webm";
-      if (finalMimeType.includes("ogg")) ext = "ogg";
-      else if (finalMimeType.includes("wav")) ext = "wav";
-
-      const file = new File([blob], `recorded.${ext}`, { type: finalMimeType });
-
-      if (mode === "enroll") {
-        recordedFiles.enroll.push(file);
-        document.getElementById("enrollResult").className = "result-box info";
-        document.getElementById("enrollResult").textContent =
-          `Recorded sample saved for enrollment (${recordedFiles.enroll.length} sample(s))`;
-      } else if (mode === "identify") {
-        recordedFiles.identify = file;
-      } else if (mode === "verify") {
-        recordedFiles.verify = file;
+      if (!speakerId) {
+        alert("Please select a profile to verify against.");
+        return;
       }
 
-      btn.classList.remove("recording");
-      btn.textContent = "⏺ Record Live (3s)";
+      if (!pickedFile) {
+        alert("Please upload or record audio first.");
+        return;
+      }
 
-      // Stop waveform animation when recording ends
-      if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-      analyser = null;
+      const formData = new FormData();
+      formData.append("speaker_id", speakerId);
+      formData.append("file", pickedFile);
 
-      stream.getTracks().forEach(track => track.stop());
-    };
+      try {
+        const response = await fetch("/api/v1/speakers/verify", {
+          method: "POST",
+          body: formData
+        });
 
-    mediaRecorder.start();
+        const data = await response.json();
 
-    setTimeout(() => {
+        if (!response.ok) {
+          throw new Error(data.detail || "Verification failed");
+        }
+
+        renderVerifyResult(data);
+        fileInput.value = "";
+        recordedFiles.verify = null;
+        document.getElementById("audioPlaybackVerify").style.display = "none";
+        document.getElementById("btnRecordVerify").textContent = "⏺ Record Live (3s)";
+
+      } catch (err) {
+        panel.style.display = 'block';
+        panel.innerHTML = `<div class="result-box error">${err.message}</div>`;
+      }
+    }
+
+    function renderVerifyResult(data) {
+      document.getElementById('verifyResultPanel').style.display = 'block';
+      const badge = document.getElementById('verifyBadge');
+      const msg = document.getElementById('verifyMsg');
+
+      if (data.verified) {
+        badge.className = 'badge badge-success';
+        badge.textContent = 'VERIFIED';
+        msg.textContent = `${data.speaker_name} confirmed.`;
+        msg.style.color = 'var(--success)';
+      } else {
+        badge.className = 'badge badge-error';
+        badge.textContent = 'REJECTED';
+        msg.textContent = data.message || 'Profile mismatch.';
+        msg.style.color = 'var(--error)';
+      }
+
+      const pct = Math.max(0, Math.min(100, Math.round(data.confidence * 100)));
+      const fill = document.getElementById('verifyFill');
+      fill.style.width = pct + '%';
+      fill.style.background = data.verified ? 'var(--success)' : 'var(--error)';
+      document.getElementById('verifyScore').textContent = pct + '%';
+    }
+
+    // ---------------------------------------------------------------
+    // Live recording (Web Audio API + MediaRecorder)
+    // ---------------------------------------------------------------
+    let mediaRecorder = null;
+    let recordingChunks = [];
+    let analyser = null;
+    let animFrame = null;
+    let audioChunks = [];
+    let recordedFiles = { enroll: [], identify: null, verify: null };
+
+    async function toggleRecord(mode) {
+      const btn = document.getElementById(
+        mode === "enroll" ? "btnRecordEnroll" :
+          mode === "identify" ? "btnRecordIdentify" :
+            "btnRecordVerify"
+      );
+
       if (mediaRecorder && mediaRecorder.state === "recording") {
         mediaRecorder.stop();
+        return;
       }
-    }, 3000);
 
-  } catch (err) {
-    console.error(err);
-    alert("Microphone access failed.");
-    btn.classList.remove("recording");
-    btn.textContent = "⏺ Record Live (3s)";
-  }
-}
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = getSupportedMimeType();
 
-function startWaveform(mode) {
-  const canvasId = { enroll:'waveformEnroll', identify:'waveformIdentify', verify:'waveformVerify' }[mode];
-  const canvas   = document.getElementById(canvasId);
-  if (!canvas || !analyser) return;
-  const ctx  = canvas.getContext('2d');
-  const data = new Uint8Array(analyser.frequencyBinCount);
-  const W    = canvas.offsetWidth, H = canvas.height;
-  canvas.width = W;
+        audioChunks = [];
 
-  function draw() {
-    animFrame = requestAnimationFrame(draw);
-    analyser.getByteTimeDomainData(data);
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#0a0a0c';
-    ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = '#f5a623';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    const sliceWidth = W / data.length;
-    let x = 0;
-    for (let i = 0; i < data.length; i++) {
-      const v = data[i] / 128;
-      const y = v * H / 2;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      x += sliceWidth;
+        // Web Audio analyser
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(stream);
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 1024;
+        source.connect(analyser);
+        startWaveform(mode);
+
+        mediaRecorder = mimeType
+          ? new MediaRecorder(stream, { mimeType })
+          : new MediaRecorder(stream);
+
+        btn.classList.add("recording");
+        btn.textContent = "⏹ Stop Recording";
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data && event.data.size > 0) audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const finalMimeType = mediaRecorder.mimeType || mimeType || "audio/webm";
+          const blob = new Blob(audioChunks, { type: finalMimeType });
+
+          let ext = "webm";
+          if (finalMimeType.includes("ogg")) ext = "ogg";
+          else if (finalMimeType.includes("wav")) ext = "wav";
+
+          const file = new File([blob], `recorded.${ext}`, { type: finalMimeType });
+
+          const playbackUrl = URL.createObjectURL(file);
+
+          if (mode === "enroll") {
+            recordedFiles.enroll.push(file);
+            const resBox = document.getElementById("enrollResult");
+            resBox.style.display = "block";
+            resBox.className = "result-box info";
+            resBox.textContent = `Recorded sample ready (${recordedFiles.enroll.length} total)`;
+            const audioEl = document.getElementById("audioPlaybackEnroll");
+            audioEl.src = playbackUrl;
+            audioEl.style.display = "block";
+          } else if (mode === "identify") {
+            recordedFiles.identify = file;
+            document.getElementById("btnRecordIdentify").textContent = "✓ Recorded (Click to re-record)";
+            const audioEl = document.getElementById("audioPlaybackIdentify");
+            audioEl.src = playbackUrl;
+            audioEl.style.display = "block";
+          } else if (mode === "verify") {
+            recordedFiles.verify = file;
+            document.getElementById("btnRecordVerify").textContent = "✓ Recorded (Click to re-record)";
+            const audioEl = document.getElementById("audioPlaybackVerify");
+            audioEl.src = playbackUrl;
+            audioEl.style.display = "block";
+          }
+
+          btn.classList.remove("recording");
+          if (mode === "enroll") btn.textContent = "⏺ Record Another Sample (3s)";
+
+          if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+          analyser = null;
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+
+        setTimeout(() => {
+          if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+        }, 3000);
+
+      } catch (err) {
+        console.error(err);
+        alert("Microphone access failed.");
+        btn.classList.remove("recording");
+        btn.textContent = "⏺ Record Live (3s)";
+      }
     }
-    ctx.lineTo(W, H / 2);
-    ctx.stroke();
-  }
-  draw();
-}
 
-// ---------------------------------------------------------------
-// Utilities
-// ---------------------------------------------------------------
-function escHtml(str) {
-  return String(str).replace(/[&<>"']/g, c =>
-    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-}
-function getSupportedMimeType() {
-  const types = [
-    "audio/webm;codecs=opus",
-    "audio/webm",
-    "audio/ogg;codecs=opus",
-    "audio/ogg"
-  ];
+    function startWaveform(mode) {
+      const canvasId = { enroll: 'waveformEnroll', identify: 'waveformIdentify', verify: 'waveformVerify' }[mode];
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || !analyser) return;
+      const ctx = canvas.getContext('2d');
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      const W = canvas.offsetWidth, H = canvas.height;
+      canvas.width = W;
 
-  for (const type of types) {
-    if (MediaRecorder.isTypeSupported(type)) {
-      return type;
+      function draw() {
+        animFrame = requestAnimationFrame(draw);
+        analyser.getByteTimeDomainData(data);
+        ctx.clearRect(0, 0, W, H);
+        // ctx.fillStyle = '#18181b'; ctx.fillRect(0, 0, W, H); // clear background
+        ctx.strokeStyle = '#6366f1';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const sliceWidth = W / data.length;
+        let x = 0;
+        for (let i = 0; i < data.length; i++) {
+          const v = data[i] / 128;
+          const y = v * H / 2;
+          i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          x += sliceWidth;
+        }
+        ctx.lineTo(W, H / 2);
+        ctx.stroke();
+      }
+      draw();
     }
-  }
-  return "";
-}
 
-// ---------------------------------------------------------------
-// Init
-// ---------------------------------------------------------------
-window.addEventListener('DOMContentLoaded', () => {
-  checkHealth();
-  loadSpeakers();
-  setInterval(checkHealth, 30_000);
-});
-</script>
+    // ---------------------------------------------------------------
+    // Utilities
+    // ---------------------------------------------------------------
+    function escHtml(str) {
+      return String(str).replace(/[&<>"']/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function getSupportedMimeType() {
+      const types = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/ogg"];
+      for (const type of types) if (MediaRecorder.isTypeSupported(type)) return type;
+      return "";
+    }
+
+    // ---------------------------------------------------------------
+    // Init
+    // ---------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      checkHealth();
+      switchView('dashboard'); // Initializes Dashboard view
+      setInterval(checkHealth, 30_000);
+    });
+  </script>
 </body>
+
 </html>
