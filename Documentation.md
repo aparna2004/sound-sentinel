@@ -487,10 +487,3 @@ Press `Ctrl+C` in the terminal. The `asyncio.CancelledError` / `KeyboardInterrup
 | **No authentication** | The API is open; suitable for local/development use only |
 | **Single-process, no concurrency** | One inference at a time; not suited for production scale |
 
-### Phase Roadmap
-
-| Phase | Status | Features |
-|---|---|---|
-| **Phase 1** (current) | ✅ Complete | File upload, REST API, Dashboard UI |
-| **Phase 2** | 🔜 Planned | WebSocket real-time streaming endpoint |
-| **Phase 3** | 🔜 Planned | Authentication, rate limiting, multi-tenant support |
