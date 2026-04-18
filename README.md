@@ -1,4 +1,4 @@
-# Sound Sentinel — Project Documentation
+# Sound Sentinel
 
 ## Table of Contents
 
