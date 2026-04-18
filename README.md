@@ -1,5 +1,9 @@
 # Sound Sentinel
 
+Sound Sentinel is a lightweight voice biometrics-based defense system designed for secure speaker authentication. The system operates entirely in a local environment without relying on cloud-based infrastructure, thereby ensuring privacy and reducing latency. It leverages classical signal processing techniques such as Mel-Frequency Cepstral Coefficients (MFCC) and cosine similarity to perform speaker recognition tasks efficiently.
+The system supports three core functionalities: enrollment, identification, and verification. During enrollment, voice samples are collected and converted into numerical feature representations known as embeddings. These embeddings are stored in a JSON-based database and used as reference data. In the identification phase, an unknown audio input is compared against all stored profiles to determine the most likely speaker. In the verification phase, the system validates whether a given voice sample matches a claimed identity.
+The backend is implemented using FastAPI, while the frontend provides a simple and intuitive interface for user interaction. Audio processing is performed using libraries such as librosa and NumPy, and FFmpeg is used for audio format conversion. The system is designed to be efficient, interpretable, and easy to deploy, making it suitable for applications such as voice-based authentication, attendance systems, and secure access control. 
+
 ## Table of Contents
 
 1. [Project Overview](#1-project-overview)
